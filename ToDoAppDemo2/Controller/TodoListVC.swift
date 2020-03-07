@@ -7,47 +7,40 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListVC: UIViewController {
 
     var itemArray = [Item]()
-
-    let datafilepath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     @IBOutlet weak var todoListTableView: UITableView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        print(datafilepath)
-        
         loaditem()
     }
     
     func saveItem() {
-        let encoder = PropertyListEncoder()
          
          do {
-              let data = try encoder.encode(self.itemArray)
-             try data.write(to: self.datafilepath!)
+            try context.save()
          } catch{
-             print(error.localizedDescription)
+             print("Error saving context : \(error)")
          }
-        
-         
-         
+
          self.todoListTableView.reloadData()
         
     }
     
     func loaditem() {
-        if let data = try? Data(contentsOf: datafilepath!) {
-            let decoder = PropertyListDecoder()
-            do {
-                itemArray = try decoder.decode([Item].self, from: data)
-            } catch {
-                print(error.localizedDescription)
-            }
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        do {
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context: \(error)")
         }
     }
 
@@ -59,9 +52,9 @@ class TodoListVC: UIViewController {
         
         let action = UIAlertAction(title: "Add item", style: .default) { (action) in
 
-            var newitem = Item()
+            var newitem = Item(context: self.context)
             newitem.title = textFiled.text!
-            
+            newitem.done = false
             self.itemArray.append(newitem)
             
             self.saveItem()
@@ -106,7 +99,12 @@ extension TodoListVC: UITableViewDataSource {
 extension TodoListVC: UITableViewDelegate{
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        
+//        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        
+         context.delete(itemArray[indexPath.row])
+        itemArray.remove(at: indexPath.row)
+       
         
         saveItem()
         
