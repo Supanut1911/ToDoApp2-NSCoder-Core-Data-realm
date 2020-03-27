@@ -30,6 +30,7 @@ class TodoListVC: UIViewController, UIPickerViewDelegate, UIImagePickerControlle
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         loaditem()
     }
     
@@ -105,14 +106,15 @@ extension TodoListVC: UITableViewDataSource {
 extension TodoListVC: UITableViewDelegate{
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        
-//        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
-        
-//         context.delete(itemArray[indexPath.row])
-//        todoItems.remove(at: indexPath.row)
-       
-        
-//        saveItem()
+        if let item = todoItems?[indexPath.row] {
+            do {
+            try realm.write {
+                item.done = !item.done
+            }
+            } catch {
+                print("Error saving done status, \(error)")
+            }
+        }
         
         todoListTableView.reloadData()
         
